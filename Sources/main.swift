@@ -111,6 +111,8 @@ final class MarkdownDocument: NSDocument, NSTextViewDelegate {
     var readerScroll: NSScrollView!
     var fontSize: CGFloat = 16
     var readingState = ReadingState()
+    var restoredReadingState: ReadingState?
+    var restoredSessionID: UUID?
     var currentMode = 0
     var restoringPosition = true
     var positionWork: DispatchWorkItem?
@@ -196,7 +198,9 @@ final class MarkdownDocument: NSDocument, NSTextViewDelegate {
     }
     override func makeWindowControllers() {
         if let url = fileURL { RecentFiles.remember(url); readingState = ReadingState.load(url) }
+        if let restoredReadingState { readingState = restoredReadingState }
         let window = MarkdownWindow(contentRect: NSRect(x: 0, y: 0, width: 860, height: 680), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
+        window.isRestorable = false
         window.tabbingIdentifier = "MDMiniDocuments"
         window.tabbingMode = .preferred
         window.minSize = NSSize(width: 440, height: 320)
@@ -208,7 +212,7 @@ final class MarkdownDocument: NSDocument, NSTextViewDelegate {
         bar.translatesAutoresizingMaskIntoConstraints = false
         content.addSubview(bar)
         modes = NSSegmentedControl(labels: ["Чтение", "Редактор"], trackingMode: .selectOne, target: self, action: #selector(changeMode))
-        modes.selectedSegment = fileURL == nil ? 1 : readingState.mode
+        modes.selectedSegment = restoredReadingState?.mode ?? (fileURL == nil ? 1 : readingState.mode)
         modes.translatesAutoresizingMaskIntoConstraints = false
         bar.addSubview(modes)
         let hint = NSTextField(labelWithString: "⌘O открыть  ·  ⌘S сохранить")
@@ -313,12 +317,17 @@ final class MarkdownDocument: NSDocument, NSTextViewDelegate {
         positionWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: work)
     }
+    func captureReadingState() -> ReadingState {
+        guard !restoringPosition, editor != nil else { return readingState }
+        var state = readingState
+        state.mode = currentMode
+        if currentMode == 1 { state.editor = ReadingState.capture(editor) }
+        else { state.reader = ReadingState.capture(reader) }
+        return state
+    }
     func saveReadingPosition() {
-        guard !restoringPosition, let url = fileURL, editor != nil else { return }
-        readingState.mode = currentMode
-        if currentMode == 1 { readingState.editor = ReadingState.capture(editor) }
-        else { readingState.reader = ReadingState.capture(reader) }
-        readingState.store(url)
+        readingState = captureReadingState()
+        if let url = fileURL { readingState.store(url) }
     }
     override func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         if menuItem.action == #selector(togglePin(_:)) {
@@ -428,6 +437,33 @@ final class MarkdownDocument: NSDocument, NSTextViewDelegate {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
+    private var didRestoreSession = false
+
+    private var savedQuitSession = false
+
+    func prepareSessionForQuit() -> Bool {
+        if savedQuitSession { return true }
+        guard NSApp.modalWindow == nil, !NSApp.windows.contains(where: { $0.attachedSheet != nil }) else { return false }
+        do {
+            let documents = NSDocumentController.shared.documents.compactMap { $0 as? MarkdownDocument }
+            let snapshot = SessionSnapshot.capture(documents: documents, windows: NSApp.orderedWindows, selected: NSApp.keyWindow ?? NSApp.mainWindow)
+            try SessionStore.live.save(snapshot)
+            savedQuitSession = true
+            // The snapshot now holds every unsaved buffer. Prevent the standard
+            // quit review from asking the user to write those buffers to disk.
+            for document in documents where document.isDocumentEdited { document.updateChangeCount(.changeCleared) }
+            return true
+        } catch {
+            let message = NSAlert(error: error)
+            message.messageText = "Не удалось сохранить вкладки. Приложение остаётся открытым."
+            message.runModal()
+            return false
+        }
+    }
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        prepareSessionForQuit() ? .terminateNow : .terminateCancel
+    }
+
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
         let pinned = RecentFiles.pinned
@@ -486,7 +522,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             (document as? MarkdownDocument)?.saveReadingPosition()
         }
     }
-    func applicationShouldOpenUntitledFile(_ sender: NSApplication) -> Bool { true }
+    func applicationShouldOpenUntitledFile(_ sender: NSApplication) -> Bool {
+        if !NSDocumentController.shared.documents.isEmpty { return false }
+        if didRestoreSession { return true }
+        return (try? SessionStore.live.load())?.tabs.isEmpty ?? true
+    }
     func applicationDidFinishLaunching(_ notification: Notification) {
         // AppKit may also insert its own recent-documents menu at launch.
         // Keep one visible, localized list with persistent pinned files and history.
@@ -498,6 +538,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 }
             }
         }
+        do {
+            if let snapshot = try SessionStore.live.load() { SessionRestorer.restore(snapshot) }
+        } catch { NSApp.presentError(error) }
+        didRestoreSession = true
         NSApp.activate(ignoringOtherApps: true)
     }
 }
@@ -541,7 +585,7 @@ if CommandLine.arguments.contains("--render-readme") {
     do { try doc.read(from: Data([0xff, 0xff, 0xff]), ofType: "Markdown"); fatalError("Invalid encoding accepted") } catch {}
     print("PASS: UTF-8/UTF-16 round trips, invalid encoding rejection, Markdown rendering")
 } else {
-    let app = NSApplication.shared
+    let app = MarkdownApplication.shared
     let delegate = AppDelegate()
     app.delegate = delegate
     app.setActivationPolicy(.regular)

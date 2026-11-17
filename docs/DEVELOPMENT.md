@@ -35,3 +35,11 @@ This opt-in helper changes the system's default handler for the sample document'
 ## Release packaging
 
 Build, run checks, and package only the app bundle with `ditto --norsrc --noextattr -c -k --keepParent`. Do not include local preferences, handoff notes, or generated test documents in a release. The current published build is Apple Silicon only and uses an ad hoc signature.
+
+## Session recovery
+
+`Sources/Session.swift` stores tab order, the selected tab, encodings, reading positions, buffers, edited flags, and disk fingerprints. The snapshot is written atomically on normal termination to Application Support/MD Mini/session.json with directory mode 0700 and file mode 0600. Session data is local and excluded from releases and the repository.
+
+`MarkdownApplication.terminate` persists the snapshot before AppKit starts its document-save review. Only after a successful write are dirty flags cleared for termination; restored drafts become edited again. A failed write leaves the app open. Individual tab closing retains the normal document review.
+
+Clean documents reopen from disk; edited buffers recover in memory and retain their original disk fingerprint for conflict checks. Missing files fall back to saved text as edited documents. Existing Finder-opened documents are reused; a saved draft is recovered over a clean in-memory read, while two already-edited buffers remain separate. Empty startup tabs are omitted. The snapshot is written at normal quit, not continuously; latest-edit crash recovery is outside this version.

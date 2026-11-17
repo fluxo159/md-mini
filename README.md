@@ -32,6 +32,7 @@ A small, native app for opening a Markdown file, reading it comfortably, making 
 
 - **Read and edit:** headings, emphasis, lists, checkboxes, links, fenced code, and selectable Markdown tables.
 - **Recent and pinned files:** the last 20 documents, with favorites kept at the top. Clearing recents keeps your pins.
+- **Restore your tabs after ⌘Q:** reopen the previous tab order and active document, including unsaved drafts. Clean files are read fresh from disk.
 - **Remember your place:** separate positions for reading and editing, retained between launches.
 - **Notice changes on disk:** a small “Update / Later” banner when another app modifies the file. Unsaved edits require a decision; you can save a separate copy.
 - **Native basics:** search, undo/redo, text sizing, multiple documents, and system light/dark appearance.
@@ -101,3 +102,5 @@ docs/          Interface previews and release notes
 The reader implements a focused subset of Markdown. Images, raw HTML, Mermaid, and complex nested syntax are shown as text or simplified. After a file is moved, reopen and pin its new location. Reading-position restoration is approximate when preceding text changes. Very large documents and delayed cloud-sync behavior have not been validated.
 
 Recent paths, pins, and reading positions are stored locally in macOS preferences. The app has no analytics or update checker. Clicking a web link opens it in your browser.
+
+On normal quit, tabs and their text buffers are saved atomically to `~/Library/Application Support/MD Mini/session.json` with owner-only access. Unsaved drafts are kept locally, without writing over the original files. Closing an individual tab still uses the normal save/discard decision. A failed session write cancels quit. Recovery of the latest edits after a crash is not implemented.
