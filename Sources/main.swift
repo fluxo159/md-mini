@@ -196,7 +196,9 @@ final class MarkdownDocument: NSDocument, NSTextViewDelegate {
     }
     override func makeWindowControllers() {
         if let url = fileURL { RecentFiles.remember(url); readingState = ReadingState.load(url) }
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 860, height: 680), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
+        let window = MarkdownWindow(contentRect: NSRect(x: 0, y: 0, width: 860, height: 680), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
+        window.tabbingIdentifier = "MDMiniDocuments"
+        window.tabbingMode = .preferred
         window.minSize = NSSize(width: 440, height: 320)
         window.center()
         window.setFrameAutosaveName("MarkdownWindow")
@@ -549,6 +551,11 @@ if CommandLine.arguments.contains("--render-readme") {
     let find = item("Найти…", #selector(NSTextView.performFindPanelAction(_:)), "f"); find.tag = NSTextFinder.Action.showFindInterface.rawValue
     menu("Правка", [item("Отменить", Selector(("undo:")), "z"), item("Повторить", Selector(("redo:")), "Z"), .separator(), item("Вырезать", #selector(NSText.cut(_:)), "x"), item("Копировать", #selector(NSText.copy(_:)), "c"), item("Вставить", #selector(NSText.paste(_:)), "v"), item("Выделить всё", #selector(NSText.selectAll(_:)), "a"), .separator(), find], in: main)
     menu("Вид", [item("Чтение / редактор", #selector(MarkdownDocument.toggleMode(_:)), "e"), item("Увеличить текст", #selector(MarkdownDocument.bigger(_:)), "+"), item("Уменьшить текст", #selector(MarkdownDocument.smaller(_:)), "-")], in: main)
+    let previousTab = item("Предыдущая вкладка", #selector(NSWindow.selectPreviousTab(_:)), String(UnicodeScalar(NSLeftArrowFunctionKey)!))
+    let nextTab = item("Следующая вкладка", #selector(NSWindow.selectNextTab(_:)), String(UnicodeScalar(NSRightArrowFunctionKey)!))
+    main.item(at: 3)?.submenu?.addItem(.separator())
+    main.item(at: 3)?.submenu?.addItem(previousTab)
+    main.item(at: 3)?.submenu?.addItem(nextTab)
     let pathItem = item("Открыть по пути…", #selector(AppDelegate.openPath(_:)), "O")
     pathItem.target = delegate
     main.item(at: 1)?.submenu?.insertItem(pathItem, at: 2)

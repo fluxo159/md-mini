@@ -62,6 +62,7 @@ To open all `.md` files with MD Mini: select one in Finder → **Get Info** → 
 | Save / Save as | ⌘S / ⌘⇧S |
 | Read / edit | ⌘E |
 | Pin / unpin current file | ⌘D |
+| Previous / next tab | ⌘← / ⌘→ |
 | Find | ⌘F |
 | Larger / smaller text | ⌘+ / ⌘− |
 

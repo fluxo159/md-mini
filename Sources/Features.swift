@@ -2,6 +2,23 @@ import AppKit
 import CryptoKit
 import Darwin
 
+// Handle document navigation before the text view interprets Command-arrow as a caret move.
+final class MarkdownWindow: NSWindow {
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        let modifiers = event.modifierFlags.intersection([.command, .control, .option, .shift])
+        if event.type == .keyDown, modifiers == .command,
+           attachedSheet == nil, NSApp.modalWindow == nil,
+           let tabs = tabbedWindows, tabs.count > 1 {
+            switch event.keyCode {
+            case 123: selectPreviousTab(nil); return true
+            case 124: selectNextTab(nil); return true
+            default: break
+            }
+        }
+        return super.performKeyEquivalent(with: event)
+    }
+}
+
 enum Preferences {
     static let testDomain = "local.jamil.mdmini.tests." + UUID().uuidString
     static let defaults: UserDefaults = {
