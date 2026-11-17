@@ -1,0 +1,13 @@
+.DS_Store
+.AppleDouble/
+output/
+tmp/
+.build/
+DerivedData/
+*.dSYM/
+*.zip
+*.log
+.env
+.env.*
+# Personal handoff notes are local to this workspace.
+CODEX.md

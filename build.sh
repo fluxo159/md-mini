@@ -1,0 +1,43 @@
+#!/bin/zsh
+set -eu
+cd "${0:A:h}"
+stage=$(mktemp -d /tmp/mdmini-build.XXXXXX)
+trap 'rm -rf "$stage"' EXIT
+app="$stage/MD Mini.app"
+mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
+swiftc -O -whole-module-optimization -target "$(uname -m)-apple-macos13.0" Sources/*.swift -o "$app/Contents/MacOS/MD Mini" -framework AppKit -framework UniformTypeIdentifiers
+cp Assets/AppIcon.icns "$app/Contents/Resources/AppIcon.icns"
+cat > "$app/Contents/Info.plist" <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleExecutable</key><string>MD Mini</string>
+<key>CFBundleIdentifier</key><string>local.jamil.mdmini</string>
+<key>CFBundleIconFile</key><string>AppIcon</string>
+<key>CFBundleName</key><string>MD Mini</string>
+<key>CFBundleDisplayName</key><string>MD Mini</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+<key>CFBundleShortVersionString</key><string>1.0</string>
+<key>CFBundleVersion</key><string>4</string>
+<key>LSMinimumSystemVersion</key><string>13.0</string>
+<key>NSHighResolutionCapable</key><true/>
+<key>NSPrincipalClass</key><string>NSApplication</string>
+<key>CFBundleDocumentTypes</key><array><dict>
+<key>CFBundleTypeName</key><string>Markdown</string>
+<key>CFBundleTypeRole</key><string>Editor</string>
+<key>LSHandlerRank</key><string>Alternate</string>
+<key>LSItemContentTypes</key><array><string>net.daringfireball.markdown</string></array>
+<key>NSDocumentClass</key><string>MarkdownDocument</string>
+<key>CFBundleTypeExtensions</key><array><string>md</string><string>markdown</string></array>
+</dict></array>
+<key>UTImportedTypeDeclarations</key><array><dict>
+<key>UTTypeIdentifier</key><string>net.daringfireball.markdown</string>
+<key>UTTypeDescription</key><string>Markdown</string>
+<key>UTTypeConformsTo</key><array><string>public.plain-text</string></array>
+<key>UTTypeTagSpecification</key><dict><key>public.filename-extension</key><array><string>md</string><string>markdown</string></array><key>public.mime-type</key><string>text/markdown</string></dict>
+</dict></array>
+</dict></plist>
+PLIST
+xattr -cr "$app"
+codesign --force --sign - "$app"
+ditto --norsrc --noextattr "$app" "output/MD Mini.app"

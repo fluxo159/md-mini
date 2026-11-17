@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="420" viewBox="0 0 1600 420" role="img" aria-labelledby="title desc">
+<title id="title">MD Mini</title><desc id="desc">A tiny native Markdown reader and editor for macOS.</desc>
+<rect width="1600" height="420" rx="30" fill="#F5F2EB"/>
+<svg x="64" y="66" width="250" height="250" viewBox="0 0 1024 1024">
+  <rect x="100" y="100" width="824" height="824" rx="184" fill="#EDE9DF"/>
+  <path d="M304 210 H626 L754 338 V770 Q754 804 720 804 H304 Q270 804 270 770 V244 Q270 210 304 210Z" fill="#FAF8F2" stroke="#30373A" stroke-width="22" stroke-linejoin="round"/>
+  <path d="M626 210 V314 Q626 338 650 338 H754Z" fill="#C56A45"/>
+  <path d="M330 578 V426 H376 L424 495 L472 426 H518 V578 H472 V504 L424 570 L376 504 V578Z" fill="#30373A"/>
+  <path d="M608 426 H654 V512 H690 L631 578 L572 512 H608Z" fill="#30373A"/>
+  <path d="M340 656 H680 M340 710 H570" fill="none" stroke="#CBC8BF" stroke-width="18" stroke-linecap="round"/>
+</svg>
+<text x="365" y="176" fill="#30373A" font-family="-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif" font-size="94" font-weight="700" letter-spacing="-4">MD Mini</text>
+<text x="370" y="242" fill="#565E60" font-family="-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif" font-size="35">Markdown. Just the essentials.</text>
+<g font-family="-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif" font-size="20" font-weight="600">
+<rect x="370" y="283" width="185" height="44" rx="22" fill="#E7E3D9"/><text x="400" y="312" fill="#30373A">Native macOS</text>
+<rect x="570" y="283" width="155" height="44" rx="22" fill="#E7E3D9"/><text x="599" y="312" fill="#30373A">Under 1 MB</text>
+<rect x="740" y="283" width="200" height="44" rx="22" fill="#E7E3D9"/><text x="771" y="312" fill="#30373A">Swift + AppKit</text>
+</g>
+<path d="M1264 105H1398L1470 177V314H1264Z" fill="none" stroke="#DBD6CB" stroke-width="8" stroke-linejoin="round"/>
+<path d="M1310 209H1419M1310 246H1390" stroke="#C56A45" stroke-width="9" stroke-linecap="round"/>
+</svg>
